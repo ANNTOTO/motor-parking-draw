@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>新加州社區分區抽籤工具</title>
+  <style>
+    body { font-family: "微軟正黑體", sans-serif; padding: 30px; background: #e6f3ff; }
+    h1 { color: #333; }
+    .zone { margin-bottom: 40px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px #ccc; }
+    .zone h2 { margin-bottom: 10px; }
+    button { padding: 8px 16px; font-size: 16px; margin-bottom: 10px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+    th, td { border: 1px solid #999; padding: 8px; text-align: center; }
+    th { background-color: #eee; }
+  </style>
+</head>
+<body>
+  <h1>新加州社區分區機車格抽籤工具</h1>
+  <p>點選每一區的按鈕，即可進行該區抽籤，抽籤結果將以表格呈現。</p>
+  <div id="zones"></div>
+
+  <script>
+    const data = {'A區': ['A1-2F', 'A2-2F', 'A3-2F', 'A5-2F', 'A1-3F', 'A2-3F', 'A3-3F', 'A5-3F', 'A1-4F', 'A2-4F', 'A3-4F', 'A5-4F', 'A1-5F', 'A2-5F', 'A3-5F', 'A5-5F', 'A1-6F', 'A2-6F', 'A3-6F', 'A5-6F', 'A1-7F', 'A2-7F', 'A3-7F', 'A5-7F', 'A1-8F', 'A2-8F', 'A3-8F', 'A5-8F', 'A1-9F', 'A2-9F', 'A3-9F', 'A5-9F', 'A1-10F', 'A2-10F', 'A3-10F', 'A5-10F', 'A1-11F', 'A2-11F', 'A3-11F', 'A5-11F'], 'B區': ['B1-2F', 'B2-2F', 'B3-2F', 'B5-2F', 'B6-2F', 'B1-3F', 'B2-3F', 'B3-3F', 'B5-3F', 'B6-3F', 'B1-4F', 'B2-4F', 'B3-4F', 'B5-4F', 'B6-4F', 'B1-5F', 'B2-5F', 'B3-5F', 'B5-5F', 'B6-5F', 'B1-6F', 'B2-6F', 'B3-6F', 'B5-6F', 'B6-6F', 'B1-7F', 'B2-7F', 'B3-7F', 'B5-7F', 'B6-7F', 'B1-8F', 'B2-8F', 'B3-8F', 'B5-8F', 'B6-8F', 'B1-9F', 'B2-9F', 'B3-9F', 'B5-9F', 'B6-9F', 'B1-10F', 'B2-10F', 'B3-10F', 'B5-10F', 'B6-10F', 'B1-11F', 'B2-11F', 'B3-11F', 'B5-11F', 'B6-11F'], 'C區': ['C1-2F', 'C2-2F', 'C3-2F', 'C5-2F', 'C6-2F', 'C1-3F', 'C2-3F', 'C3-3F', 'C5-3F', 'C6-3F', 'C1-4F', 'C2-4F', 'C3-4F', 'C5-4F', 'C6-4F', 'C1-5F', 'C2-5F', 'C3-5F', 'C5-5F', 'C6-5F', 'C1-6F', 'C2-6F', 'C3-6F', 'C5-6F', 'C6-6F', 'C1-7F', 'C2-7F', 'C3-7F', 'C5-7F', 'C6-7F', 'C1-8F', 'C2-8F', 'C3-8F', 'C5-8F', 'C6-8F', 'C1-9F', 'C2-9F', 'C3-9F', 'C5-9F', 'C6-9F', 'C1-10F', 'C2-10F', 'C3-10F', 'C5-10F', 'C6-10F', 'C1-11F', 'C2-11F', 'C3-11F', 'C5-11F', 'C6-11F'], 'D區': ['D1-2F', 'D2-2F', 'D3-2F', 'D1-3F', 'D2-3F', 'D3-3F', 'D1-4F', 'D2-4F', 'D3-4F', 'D1-5F', 'D2-5F', 'D3-5F', 'D1-6F', 'D2-6F', 'D3-6F', 'D1-7F', 'D2-7F', 'D3-7F', 'D1-8F', 'D2-8F', 'D3-8F', 'D1-9F', 'D2-9F', 'D3-9F', 'D1-10F', 'D2-10F', 'D3-10F', 'D1-11F', 'D2-11F', 'D3-11F', 'D1-12F', 'D2-12F', 'D3-12F'], 'E區': ['E1-2F', 'E2-2F', 'E1-3F', 'E2-3F', 'E1-4F', 'E2-4F', 'E1-5F', 'E2-5F', 'E1-6F', 'E2-6F', 'E1-7F', 'E2-7F', 'E1-8F', 'E2-8F', 'E1-9F', 'E2-9F', 'E1-10F', 'E2-10F', 'E1-11F', 'E2-11F', 'E1-12F', 'E2-12F'], '店面': ['S01', 'S02', 'S03', 'S05', 'S06', 'S07', 'S08', 'S09', 'S10', 'S11', 'S12', 'S13', 'S15', 'S16', 'S17', 'S18', 'S19', 'S20']};
+
+    const slots = {
+      'A區': [...range(77, 104), ...sample(range(1, 76), 12)],
+      'B區': [...range(105, 122), ...range(126, 133), ...range(208, 214), ...sample(range(1, 76), 17)],
+      'C區': [...range(186, 207).filter(n => n !== 205), ...sample(range(1, 76), 29)],
+      'D區': [...range(153, 185)],
+      'E區': [...range(123, 125), ...range(134, 152)],
+      '店面': sample(range(1, 76), 18)
+    };
+
+    function range(start, end) {
+      return Array.from({ length: end - start + 1 }, (_, i) => String(start + i).padStart(3, '0'));
+    }
+
+    function sample(arr, n) {
+      const shuffled = [...arr].sort(() => 0.5 - Math.random());
+      return shuffled.slice(0, n).map(i => String(i).padStart(3, '0'));
+    }
+
+function drawZone(zone) {
+  const residents = [...data[zone]];
+  const slotList = [...slots[zone]].sort(() => Math.random() - 0.5);
+  const tbody = document.querySelector(`#table-${zone} tbody`);
+  tbody.innerHTML = "";
+  residents.forEach((resident, i) => {
+    const row = document.createElement("tr");
+    const td1 = document.createElement("td");
+    const td2 = document.createElement("td");
+    const slot = slotList[i];
+    td1.textContent = resident;
+    td2.textContent = (slot >= '001' && slot <= '076') ? `自由區 ${slot}` : slot || "（無車位）";
+    row.appendChild(td1);
+    row.appendChild(td2);
+    tbody.appendChild(row);
+  });
+}
+
+    const container = document.getElementById("zones");
+    Object.keys(data).forEach(zone => {
+      const div = document.createElement("div");
+      div.className = "zone";
+      div.innerHTML = `
+        <h2>${zone}</h2>
+        <button onclick="drawZone('${zone}')">抽籤</button>
+        <table id="table-${zone}">
+          <thead>
+            <tr><th>住戶</th><th>抽中車位</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      `;
+      container.appendChild(div);
+    });
+  </script>
+</body>
+</html>
