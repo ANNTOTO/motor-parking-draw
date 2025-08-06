@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>新加州社區一鍵抽籤工具</title>
+  <style>
+    body { font-family: "微軟正黑體", sans-serif; padding: 30px; background: #e6f3ff; }
+    h1 { color: #333; }
+    .zone { margin-bottom: 40px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px #ccc; }
+    .zone h2 { margin-bottom: 10px; }
+    .zone-description {
+      color: #333;
+      font-size: 25px;
+      margin-top: -10px;
+      margin-bottom: 10px;
+    }
+    button { padding: 8px 16px; font-size: 16px; margin-right: 10px; cursor: pointer; }
+    table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+    th, td { border: 1px solid #999; padding: 8px; text-align: center; }
+    th { background-color: #eee; }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+  <h1>新加州社區 機車位一鍵抽籤工具</h1>
+  <p>
+    <button onclick="drawAll()">一鍵抽出</button>
+    <button onclick="toggleSortMode()">切換排序：<span id="sortModeLabel">依戶號</span></button>
+    <button onclick="exportExcel()">⬇ 匯出 Excel</button>
+  </p>
+  <div id="message"></div>
+  <div id="zones"></div>
+
+  <script>
+    const data = {
+      'A區': ['A1-02F', 'A2-02F', 'A3-02F', 'A5-02F', 'A1-03F', 'A2-03F', 'A3-03F', 'A5-03F', 'A1-04F', 'A2-04F', 'A3-04F', 'A5-04F', 'A1-05F', 'A2-05F', 'A3-05F', 'A5-05F', 'A1-06F', 'A2-06F', 'A3-06F', 'A5-06F', 'A1-07F', 'A2-07F', 'A3-07F', 'A5-07F', 'A1-08F', 'A2-08F', 'A3-08F', 'A5-08F', 'A1-09F', 'A2-09F', 'A3-09F', 'A5-09F', 'A1-10F', 'A2-10F', 'A3-10F', 'A5-10F', 'A1-11F', 'A2-11F', 'A3-11F', 'A5-11F'],
+      'B區': ['B1-02F', 'B2-02F', 'B3-02F', 'B5-02F', 'B6-02F', 'B1-03F', 'B2-03F', 'B3-03F', 'B5-03F', 'B6-03F', 'B1-04F', 'B2-04F', 'B3-04F', 'B5-04F', 'B6-04F', 'B1-05F', 'B2-05F', 'B3-05F', 'B5-05F', 'B6-05F', 'B1-06F', 'B2-06F', 'B3-06F', 'B5-06F', 'B6-06F', 'B1-07F', 'B2-07F', 'B3-07F', 'B5-07F', 'B6-07F', 'B1-08F', 'B2-08F', 'B3-08F', 'B5-08F', 'B6-08F', 'B1-09F', 'B2-09F', 'B3-09F', 'B5-09F', 'B6-09F', 'B1-10F', 'B2-10F', 'B3-10F', 'B5-10F', 'B6-10F', 'B1-11F', 'B2-11F', 'B3-11F', 'B5-11F', 'B6-11F'],
+      'C區': ['C1-02F', 'C2-02F', 'C3-02F', 'C5-02F', 'C6-02F', 'C1-03F', 'C2-03F', 'C3-03F', 'C5-03F', 'C6-03F', 'C1-04F', 'C2-04F', 'C3-04F', 'C5-04F', 'C6-04F', 'C1-05F', 'C2-05F', 'C3-05F', 'C5-05F', 'C6-05F', 'C1-06F', 'C2-06F', 'C3-06F', 'C5-06F', 'C6-06F', 'C1-07F', 'C2-07F', 'C3-07F', 'C5-07F', 'C6-07F', 'C1-08F', 'C2-08F', 'C3-08F', 'C5-08F', 'C6-08F', 'C1-09F', 'C2-09F', 'C3-09F', 'C5-09F', 'C6-09F', 'C1-10F', 'C2-10F', 'C3-10F', 'C5-10F', 'C6-10F', 'C1-11F', 'C2-11F', 'C3-11F', 'C5-11F', 'C6-11F'],
+      'D區': ['D1-02F', 'D2-02F', 'D3-02F', 'D1-03F', 'D2-03F', 'D3-03F', 'D1-04F', 'D2-04F', 'D3-04F', 'D1-05F', 'D2-05F', 'D3-05F', 'D1-06F', 'D2-06F', 'D3-06F', 'D1-07F', 'D2-07F', 'D3-07F', 'D1-08F', 'D2-08F', 'D3-08F', 'D1-09F', 'D2-09F', 'D3-09F', 'D1-10F', 'D2-10F', 'D3-10F', 'D1-11F', 'D2-11F', 'D3-11F', 'D1-12F', 'D2-12F', 'D3-12F'],
+      'E區': ['E1-02F', 'E2-02F', 'E1-03F', 'E2-03F', 'E1-04F', 'E2-04F', 'E1-05F', 'E2-05F', 'E1-06F', 'E2-06F', 'E1-07F', 'E2-07F', 'E1-08F', 'E2-08F', 'E1-09F', 'E2-09F', 'E1-10F', 'E2-10F', 'E1-11F', 'E2-11F', 'E1-12F', 'E2-12F'],
+      '店面': ['S01', 'S02', 'S03', 'S05', 'S06', 'S07', 'S08', 'S09', 'S10', 'S11', 'S12', 'S13', 'S15', 'S16', 'S17', 'S18', 'S19', 'S20']
+    };
+	  const zoneDescriptions = {
+      'A區': '鄰近區 077–104（28格）+ 自由區 001–076 隨機抽出 12格，共 40格',
+      'B區': '鄰近區 105–122、126–133、208–214（33格）+ 自由區 001–076 隨機抽出 17格，共 50格',
+      'C區': '鄰近區 186–207（21格，不含205號）+ 自由區 001–076 隨機抽出 29格，共 50格',
+      'D區': '鄰近區 153–185，共 33格（無自由區）',
+      'E區': '鄰近區 123–125、134–152，共 22格（無自由區）',
+      '店面': '自由區 001–076 隨機抽出 18格'
+    };
+
+    const fixedSlots = {
+      'A區': range(77, 104),
+      'B區': [...range(105, 122), ...range(126, 133), ...range(208, 214)],
+      'C區': range(186, 207).filter(n => n !== 205),
+      'D區': range(153, 185),
+      'E區': [...range(123, 125), ...range(134, 152)],
+      '店面': []
+    };
+    let assigned = {};
+    let sortBy = "resident";
+    let allAssignments = [];
+    const freePool = shuffle(range(1, 76).map(n => String(n).padStart(3, '0')));
+
+    function range(start, end) {
+      return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+    }
+
+    function shuffle(array) {
+      return array.sort(() => 0.5 - Math.random());
+    }
+
+    function drawAll() {
+      document.getElementById("message").textContent = "開始抽籤...";
+      setTimeout(() => {
+        document.getElementById("message").textContent = "抽籤完成！";
+        const usedFree = new Set();
+        assigned = {};
+        allAssignments = [];
+
+        for (const zone in data) {
+          const residents = data[zone];
+          const fixed = (fixedSlots[zone] || []).map(n => String(n).padStart(3, '0'));
+          const needed = residents.length - fixed.length;
+          const free = freePool.filter(n => !usedFree.has(n)).slice(0, needed);
+          free.forEach(n => usedFree.add(n));
+
+          const slots = [...fixed, ...free];
+          assigned[zone] = residents.map((resident, i) => {
+            const slot = slots[i];
+            const label = (slot >= '001' && slot <= '076') ? `自由區 ${slot}` : slot;
+            allAssignments.push({ zone, resident, slot, label });
+            return { resident, slot, label };
+          });
+        }
+
+        renderTables();
+      }, 3000);
+    }
+
+    function renderTables() {
+      const container = document.getElementById("zones");
+      container.innerHTML = "";
+
+      for (const zone in assigned) {
+        const div = document.createElement("div");
+        div.className = "zone";
+        const description = zoneDescriptions[zone] || "";
+        div.innerHTML = `<h2>${zone}</h2><p class="zone-description">${description}</p>`;
+
+        const table = document.createElement("table");
+        table.innerHTML = `
+          <thead><tr><th>序號</th><th>戶號</th><th>抽中車位</th></tr></thead>
+          <tbody>${assigned[zone]
+            .sort((a, b) => sortBy === "slot" ? a.slot.localeCompare(b.slot) : a.resident.localeCompare(b.resident))
+            .map((row, i) => `<tr><td>${i + 1}</td><td>${row.resident}</td><td>${row.label}</td></tr>`).join("")}</tbody>
+        `;
+
+        div.appendChild(table);
+        container.appendChild(div);
+      }
+
+      // 總車位排序表
+      allAssignments.sort((a, b) => a.slot.localeCompare(b.slot));
+      const summaryDiv = document.createElement("div");
+      summaryDiv.className = "zone";
+      summaryDiv.innerHTML = `<h2>總車位排序結果表</h2>`;
+      const summaryTable = document.createElement("table");
+      summaryTable.innerHTML = `
+        <thead><tr><th>車位編號</th><th>戶號</th></tr></thead>
+        <tbody>${allAssignments.map(row =>
+          `<tr><td>${row.label}</td><td>${row.resident}</td></tr>`
+        ).join("")}</tbody>`;
+      summaryDiv.appendChild(summaryTable);
+      container.appendChild(summaryDiv);
+    }
+
+    function toggleSortMode() {
+      sortBy = sortBy === "resident" ? "slot" : "resident";
+      document.getElementById("sortModeLabel").textContent = sortBy === "resident" ? "依戶號" : "依車位";
+      renderTables();
+    }
+
+    function exportExcel() {
+      if (!Object.keys(assigned).length) {
+        alert("請先執行抽籤！");
+        return;
+      }
+      const workbook = XLSX.utils.book_new();
+
+      for (const zone in assigned) {
+        const dataRows = [["戶號", "抽中車位"]];
+        assigned[zone]
+          .sort((a, b) => sortBy === "slot" ? a.slot.localeCompare(b.slot) : a.resident.localeCompare(b.resident))
+          .forEach(row => {
+            dataRows.push([row.resident, row.label]);
+          });
+        const worksheet = XLSX.utils.aoa_to_sheet(dataRows);
+        XLSX.utils.book_append_sheet(workbook, worksheet, zone);
+      }
+
+      const summaryRows = [["車位編號", "戶號"]];
+      allAssignments.forEach(row => {
+        summaryRows.push([row.label, row.resident]);
+      });
+      const summarySheet = XLSX.utils.aoa_to_sheet(summaryRows);
+      XLSX.utils.book_append_sheet(workbook, summarySheet, "總車位排序");
+
+      XLSX.writeFile(workbook, "新加州抽籤結果.xlsx");
+    }
+  </script>
+</body>
+</html>
